@@ -2,8 +2,9 @@ FROM python:3.6
 
 RUN mkdir /app
 WORKDIR /app
-RUN git clone https://github.com/rafarui/testdockergpu.git
-WORKDIR /app/testdockergpu
+ADD requirements.txt /app/
 RUN pip install -r requirements.txt
+
+ADD . /app
 
 CMD ["python", "main.py"]
