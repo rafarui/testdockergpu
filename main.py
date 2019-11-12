@@ -3,6 +3,8 @@ import torch
 import torch.nn.functional as F
 from scorch.models import RelationalNet
 from scorch.nn import Transformer
+from scorch.utils.cuda import get_device
+device = get_device()
 dag = {0: [1, 2], 1: [2]}
 num_rows = [5, 8, 4]
 numeric_dims = [3, 2, 0]
@@ -14,17 +16,17 @@ attention_dims = {
     (1, 2): {'query': 20, 'value': 10},
 }
 X0 = dict(
-    num=torch.rand(num_rows[0], numeric_dims[0], dtype=torch.float),
+    num=torch.rand(num_rows[0], numeric_dims[0], dtype=torch.float).to(device),
     cat=torch.cat([torch.randint(0, num_embeddings[0]['cat1'], (num_rows[0], 1)),
-                   torch.randint(0, num_embeddings[0]['cat2'], (num_rows[0], 1))], dim=1)
+                   torch.randint(0, num_embeddings[0]['cat2'], (num_rows[0], 1))], dim=1).to(device)
 )
 X1 = dict(
-    num=torch.rand(num_rows[1], numeric_dims[1], dtype=torch.float),
-    cat=torch.LongTensor([])
+    num=torch.rand(num_rows[1], numeric_dims[1], dtype=torch.float).to(device),
+    cat=torch.LongTensor([]).to(device)
 )
 X2 = dict(
-    num=torch.FloatTensor(),
-    cat=torch.randint(0, num_embeddings[2]['cat3'], (num_rows[2], 1))
+    num=torch.FloatTensor().to(device),
+    cat=torch.randint(0, num_embeddings[2]['cat3'], (num_rows[2], 1)).to(device)
 )
 Xs = {0: X0, 1: X1, 2: X2}
 maps = {}
@@ -45,5 +47,5 @@ mdl = RelationalNet(dag,
                     dense_layer_params={'activation': F.relu, 'dropout_rate': 0.5},
                     output_layer_params={'activation': torch.sigmoid},
                     attention_mechanism=Transformer,
-                    device='cuda')
+                    device=device)
 mdl(data, activate_output=True)
