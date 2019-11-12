@@ -1,51 +1,28 @@
 import numpy as np
+import pandas as pd
 import torch
-import torch.nn.functional as F
-from scorch.models import RelationalNet
-from scorch.nn import Transformer
+from scorch.models import FeedForwardNet
+from scorch.utils.data_loader import DataFrameLoader
 from scorch.utils.cuda import get_device
 device = get_device()
-dag = {0: [1, 2], 1: [2]}
-num_rows = [5, 8, 4]
-numeric_dims = [3, 2, 0]
-num_embeddings = [{'cat1': 5, 'cat2': 10}, {}, {'cat3': 8}]
-embedding_dims = [{'cat1': 4, 'cat2': 8}, {}, {'cat3': 4}]
-attention_dims = {
-    (0, 1): {'query': 'max', 'value': 10},
-    (0, 2): {'query': 10, 'value': 'same'},
-    (1, 2): {'query': 20, 'value': 10},
-}
-X0 = dict(
-    num=torch.rand(num_rows[0], numeric_dims[0], dtype=torch.float).to(device),
-    cat=torch.cat([torch.randint(0, num_embeddings[0]['cat1'], (num_rows[0], 1)),
-                   torch.randint(0, num_embeddings[0]['cat2'], (num_rows[0], 1))], dim=1).to(device)
-)
-X1 = dict(
-    num=torch.rand(num_rows[1], numeric_dims[1], dtype=torch.float).to(device),
-    cat=torch.LongTensor([]).to(device)
-)
-X2 = dict(
-    num=torch.FloatTensor().to(device),
-    cat=torch.randint(0, num_embeddings[2]['cat3'], (num_rows[2], 1)).to(device)
-)
-Xs = {0: X0, 1: X1, 2: X2}
-maps = {}
-maps[(0, 1)] = np.random.randint(-1, num_rows[0], num_rows[1])
-maps[(0, 2)] = np.random.randint(-1, num_rows[0], num_rows[2])
-maps[(0, 1, 2)] = np.random.randint(-1, num_rows[1], num_rows[2])
-data = {}
-data['Xs'] = Xs
-data['maps'] = maps
-mdl = RelationalNet(dag,
-                    numeric_dims,
-                    num_embeddings,
-                    embedding_dims,
-                    attention_dims,
-                    num_heads=1,
-                    hidden_dims=[20, 20],
-                    output_dims=1,
-                    dense_layer_params={'activation': F.relu, 'dropout_rate': 0.5},
-                    output_layer_params={'activation': torch.sigmoid},
-                    attention_mechanism=Transformer,
-                    device=device)
-mdl(data, activate_output=True)
+num_cols = ['x1', 'x2', 'x3']
+target_col = 'y'
+all_cols = num_cols + [target_col]
+n_rows_train = 100
+n_rows_val = 100
+df_train = pd.DataFrame(np.random.rand(n_rows_train, len(num_cols) + 1), columns=all_cols)
+df_val = pd.DataFrame(np.random.rand(n_rows_val, len(num_cols) + 1), columns=all_cols)
+data_loader_train =  DataFrameLoader(df_train, num_cols, target_cols=target_col, device=device)
+data_loader_val =  DataFrameLoader(df_train, num_cols, target_cols=target_col, device=device)
+mdl = FeedForwardNet(numeric_dim=len(num_cols),  output_dims=1, device=device)
+early_stopping_criteria={'metric': 'loss', 'more': False, 'min_delta': 0.001, 'patience': 2}
+history = mdl.fit(data_loader_train,
+                  criterion=torch.nn.MSELoss,
+                  optimiser=torch.optim.Adam,
+                  optimiser_params={'lr': 0.001},
+                  num_epochs=5,
+                  data_loader_val=data_loader_val,
+                  metrics=['loss'],
+                  early_stopping_criteria=early_stopping_criteria,
+                  verbose=False)
+history
