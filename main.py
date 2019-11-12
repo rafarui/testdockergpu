@@ -1,120 +1,49 @@
-import argparse
+import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
-from torchvision import datasets, transforms
-
-print('GPU available:', torch.cuda.is_available())
-
-
-class Net(nn.Module):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(1, 20, 5, 1)
-        self.conv2 = nn.Conv2d(20, 50, 5, 1)
-        self.fc1 = nn.Linear(4*4*50, 500)
-        self.fc2 = nn.Linear(500, 10)
-
-    def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = F.max_pool2d(x, 2, 2)
-        x = F.relu(self.conv2(x))
-        x = F.max_pool2d(x, 2, 2)
-        x = x.view(-1, 4*4*50)
-        x = F.relu(self.fc1(x))
-        x = self.fc2(x)
-        return F.log_softmax(x, dim=1)
-
-
-def train(args, model, device, train_loader, optimizer, epoch):
-    model.train()
-    for batch_idx, (data, target) in enumerate(train_loader):
-        data, target = data.to(device), target.to(device)
-        optimizer.zero_grad()
-        output = model(data)
-        loss = F.nll_loss(output, target)
-        loss.backward()
-        optimizer.step()
-        if batch_idx % args.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item()))
-
-
-def test(args, model, device, test_loader):
-    model.eval()
-    test_loss = 0
-    correct = 0
-    with torch.no_grad():
-        for data, target in test_loader:
-            data, target = data.to(device), target.to(device)
-            output = model(data)
-            test_loss += F.nll_loss(output, target, reduction='sum').item()  # sum up batch loss
-            pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
-            correct += pred.eq(target.view_as(pred)).sum().item()
-
-    test_loss /= len(test_loader.dataset)
-
-    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)))
-
-
-def main():
-    # Training settings
-    parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
-    parser.add_argument('--batch-size', type=int, default=1024, metavar='N',
-                        help='input batch size for training (default: 64)')
-    parser.add_argument('--test-batch-size', type=int, default=1024, metavar='N',
-                        help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=10, metavar='N',
-                        help='number of epochs to train (default: 10)')
-    parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
-                        help='learning rate (default: 0.01)')
-    parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
-                        help='SGD momentum (default: 0.5)')
-    parser.add_argument('--no-cuda', action='store_true', default=False,
-                        help='disables CUDA training')
-    parser.add_argument('--seed', type=int, default=1, metavar='S',
-                        help='random seed (default: 1)')
-    parser.add_argument('--log-interval', type=int, default=10, metavar='N',
-                        help='how many batches to wait before logging training status')
-
-    parser.add_argument('--save-model', action='store_true', default=False,
-                        help='For Saving the current Model')
-    args = parser.parse_args()
-    use_cuda = not args.no_cuda and torch.cuda.is_available()
-
-    torch.manual_seed(args.seed)
-
-    device = torch.device("cuda" if use_cuda else "cpu")
-
-    kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
-    train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('../data', train=True, download=True,
-                       transform=transforms.Compose([
-                           transforms.ToTensor(),
-                           transforms.Normalize((0.1307,), (0.3081,))
-                       ])),
-        batch_size=args.batch_size, shuffle=True, **kwargs)
-    test_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('../data', train=False, transform=transforms.Compose([
-                           transforms.ToTensor(),
-                           transforms.Normalize((0.1307,), (0.3081,))
-                       ])),
-        batch_size=args.test_batch_size, shuffle=True, **kwargs)
-
-    model = Net().to(device)
-    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
-
-    for epoch in range(1, args.epochs + 1):
-        train(args, model, device, train_loader, optimizer, epoch)
-        test(args, model, device, test_loader)
-
-    if args.save_model:
-        torch.save(model.state_dict(), "mnist_cnn.pt")
-
-
-if __name__ == '__main__':
-    main()
+from scorch.models import RelationalNet
+from scorch.nn import Transformer
+dag = {0: [1, 2], 1: [2]}
+num_rows = [5, 8, 4]
+numeric_dims = [3, 2, 0]
+num_embeddings = [{'cat1': 5, 'cat2': 10}, {}, {'cat3': 8}]
+embedding_dims = [{'cat1': 4, 'cat2': 8}, {}, {'cat3': 4}]
+attention_dims = {
+    (0, 1): {'query': 'max', 'value': 10},
+    (0, 2): {'query': 10, 'value': 'same'},
+    (1, 2): {'query': 20, 'value': 10},
+}
+X0 = dict(
+    num=torch.rand(num_rows[0], numeric_dims[0], dtype=torch.float),
+    cat=torch.cat([torch.randint(0, num_embeddings[0]['cat1'], (num_rows[0], 1)),
+                   torch.randint(0, num_embeddings[0]['cat2'], (num_rows[0], 1))], dim=1)
+)
+X1 = dict(
+    num=torch.rand(num_rows[1], numeric_dims[1], dtype=torch.float),
+    cat=torch.LongTensor([])
+)
+X2 = dict(
+    num=torch.FloatTensor(),
+    cat=torch.randint(0, num_embeddings[2]['cat3'], (num_rows[2], 1))
+)
+Xs = {0: X0, 1: X1, 2: X2}
+maps = {}
+maps[(0, 1)] = np.random.randint(-1, num_rows[0], num_rows[1])
+maps[(0, 2)] = np.random.randint(-1, num_rows[0], num_rows[2])
+maps[(0, 1, 2)] = np.random.randint(-1, num_rows[1], num_rows[2])
+data = {}
+data['Xs'] = Xs
+data['maps'] = maps
+mdl = RelationalNet(dag,
+                    numeric_dims,
+                    num_embeddings,
+                    embedding_dims,
+                    attention_dims,
+                    num_heads=1,
+                    hidden_dims=[20, 20],
+                    output_dims=1,
+                    dense_layer_params={'activation': F.relu, 'dropout_rate': 0.5},
+                    output_layer_params={'activation': torch.sigmoid},
+                    attention_mechanism=Transformer,
+                    device='cuda')
+mdl(data, activate_output=True)
