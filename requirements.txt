@@ -1,5 +1,1 @@
-scikit-learn
-pandas
-numpy
-torch
-torchvision
+pycarol
