@@ -1,1 +1,4 @@
-echo $CDMLINE | sh
+#!/bin/sh
+set -e
+echo $CDMLINE
+eval $CDMLINE

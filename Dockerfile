@@ -8,13 +8,15 @@ RUN pip install -r requirements.txt
 ARG GITTOKEN
 ARG USER='totvslabs'
 
-ARG REPO='pycarol'
+ARG REPO='pyCarol'
 ARG BRANCH='dev-k8s-luigi'
 RUN git clone -b$BRANCH  --depth 1 https://${GITTOKEN}@github.com/$USER/$REPO.git
 
+WORKDIR /app/pyCarol
+RUN pip install -r requirements.txt
+
+WORKDIR /app
 
 ADD . /app
 
-RUN chmod a+x run.sh
-
-CMD ["/bin/bash", "run.sh"]
+CMD /app/run.sh

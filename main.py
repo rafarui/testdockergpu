@@ -1,3 +1,4 @@
+#!/usr/local/bin/python
 import os
 import numpy as np
 from pycarol.pipeline import inherit_list
@@ -54,3 +55,6 @@ class MainTask(Task):
     def easy_run(self, input):
         print('task ', self.__class__)
         return [np.random.random() for _ in range(1000)]
+
+
+print('it worked.')
