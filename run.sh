@@ -1,0 +1,1 @@
+echo $CDMLINE | sh
