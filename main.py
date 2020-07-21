@@ -14,6 +14,18 @@ print('GPU available:', torch.cuda.is_available())
 print('GPU available:', torch.cuda.is_available())
 
 
+from pycarol import Carol, CarolHandler
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+carol = CarolHandler(Carol())
+carol.setLevel(logging.INFO)
+logger.addHandler(carol)
+
+logger.info(f'GPU available: {torch.cuda.is_available()}')
+
+
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
