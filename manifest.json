@@ -23,30 +23,6 @@
         },
         "name": "DeepAuditTraining",
         "algorithmName": "DeepAudit"
-      },
-      {
-        "algorithmDescription": {
-          "en-US": "Payback Report",
-          "pt-br": "Payback Report"
-        },
-        "instanceProperties": {
-          "environments": {
-            "LOCALSCHEDULER": "True",
-            "ENV": "PROD",
-            "PAYOUT_REPORT": "True"
-          },
-          "profile": "",
-          "properties": {
-            "flavor": "g1.v100.xlarge",
-            "dockerName": "testdockergpu"
-          }
-        },
-        "algorithmTitle": {
-          "en-US": "Payback Report",
-          "pt-br": "Payback Report"
-        },
-        "name": "DeepAuditPaybackReport",
-        "algorithmName": "DeepAudit"
       }
     ]
   },

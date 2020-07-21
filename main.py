@@ -5,7 +5,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 
-
+import os
+print(os.environ)
 print('GPU available:', torch.cuda.is_available())
 print('GPU available:', torch.cuda.is_available())
 print('GPU available:', torch.cuda.is_available())
