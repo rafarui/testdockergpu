@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
-
+import time
 import os
 print(os.environ)
 print('GPU available:', torch.cuda.is_available())
@@ -136,3 +136,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    time.sleep(3600)
