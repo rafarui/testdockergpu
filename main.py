@@ -24,6 +24,7 @@ carol.setLevel(logging.INFO)
 logger.addHandler(carol)
 
 logger.info(f'GPU available: {torch.cuda.is_available()}')
+logger.info(f'{os.environ}')
 
 
 class Net(nn.Module):
